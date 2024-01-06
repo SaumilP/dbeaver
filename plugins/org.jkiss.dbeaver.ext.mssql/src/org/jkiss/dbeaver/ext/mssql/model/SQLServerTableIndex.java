@@ -208,7 +208,7 @@ public class SQLServerTableIndex extends JDBCTableIndex<SQLServerSchema, SQLServ
                 "    CASE WHEN I.is_unique = 1 THEN ' UNIQUE ' ELSE '' END  +  \n" +
                 "    I.type_desc COLLATE DATABASE_DEFAULT +' INDEX ' +   \n" +
                 "    I.name  + ' ON '  +  \n" +
-                "    Schema_name(T.Schema_id)+'.'+T.name + ' ( ' + \n" +
+                "    '[]' + Schema_name(T.Schema_id) + '].[' + T.name + '] ( ' + \n" +
                 "    KeyColumns + ' )  ' + \n" +
                 "    ISNULL('\n\t INCLUDE ('+IncludedColumns+' ) ','') + \n" +
                 "    ISNULL('\n\t WHERE  '+I.Filter_definition,'') + '\n\t WITH ( ' + \n" +
@@ -231,7 +231,7 @@ public class SQLServerTableIndex extends JDBCTableIndex<SQLServerSchema, SQLServ
                 " JOIN " + SQLServerUtils.getSystemTableName(getDatabase(), "sysindexes") + " SI ON I.Object_id = SI.id AND I.index_id = SI.indid   \n" +
                 " JOIN (SELECT * FROM (  \n" +
                 "    SELECT IC2.object_id , IC2.index_id ,  \n" +
-                "        STUFF((SELECT ' , ' + C.name + CASE WHEN MAX(CONVERT(INT,IC1.is_descending_key)) = 1 THEN ' DESC ' ELSE ' ASC ' END \n" +
+                "        STUFF((SELECT ' , [' + C.name + ']' + CASE WHEN MAX(CONVERT(INT,IC1.is_descending_key)) = 1 THEN ' DESC ' ELSE ' ASC ' END \n" +
                 "    FROM " + SQLServerUtils.getSystemTableName(getDatabase(), "index_columns") + " IC1  \n" +
                 "    JOIN " + SQLServerUtils.getSystemTableName(getDatabase(), "columns") + " C   \n" +
                 "       ON C.object_id = IC1.object_id   \n" +
@@ -251,7 +251,7 @@ public class SQLServerTableIndex extends JDBCTableIndex<SQLServerSchema, SQLServ
                 " JOIN " + SQLServerUtils.getSystemTableName(getDatabase(), "filegroups") + " FG ON I.data_space_id=FG.data_space_id   \n" +
                 " LEFT JOIN (SELECT * FROM (   \n" +
                 "    SELECT IC2.object_id , IC2.index_id ,   \n" +
-                "        STUFF((SELECT ' , ' + C.name  \n" +
+                "        STUFF((SELECT ' , [' + C.name + ']' \n" +
                 "    FROM " + SQLServerUtils.getSystemTableName(getDatabase(), "index_columns") + " IC1   \n" +
                 "    JOIN " + SQLServerUtils.getSystemTableName(getDatabase(), "columns") + " C    \n" +
                 "       ON C.object_id = IC1.object_id    \n" +
@@ -266,7 +266,7 @@ public class SQLServerTableIndex extends JDBCTableIndex<SQLServerSchema, SQLServ
                 "   GROUP BY IC2.object_id ,IC2.index_id) tmp1   \n" +
                 "   WHERE IncludedColumns IS NOT NULL ) tmp2    \n" +
                 "ON tmp2.object_id = I.object_id AND tmp2.index_id = I.index_id   \n" +
-                "WHERE I.is_primary_key = 0 AND I.is_unique_constraint = 0 \n" +
+                "WHERE I.is_primary_key IN (0,1) AND I.is_unique_constraint = 0 \n" +
                 "AND I.Object_id = " + getTable().getObjectId() + "\n" +
                 "AND I.name = '" + SQLUtils.escapeString(getDataSource(), getName()) + "'";
         try (JDBCSession session = DBUtils.openMetaSession(monitor, this, "Read SQL Server index definition")) {
